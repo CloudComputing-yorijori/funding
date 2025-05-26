@@ -1,7 +1,6 @@
 // models/fundingGroup.js
 //펀딩그룹
 module.exports = (sequelize, Sequelize) => {
-  const User = require("./user")(sequelize, Sequelize);
   const FundingProduct = require("./fundingProduct")(sequelize, Sequelize);
 
   class FundingGroup extends Sequelize.Model { }
@@ -63,13 +62,9 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: true,
       defaultValue: 0
     },
-    representativeUserId: { //대표자의 사용자번호(FK)
+    representativeUserId: {
       type: Sequelize.INTEGER,
-      allowNull: false,
-      references: {
-        model: User,
-        key: 'userId'
-      }
+      allowNull: false
     }
   }, {
     sequelize,

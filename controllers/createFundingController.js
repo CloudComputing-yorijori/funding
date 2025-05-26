@@ -2,7 +2,6 @@ const db = require("../models/index"),
     FundingProduct = db.fundingProduct,
     FundingGroup = db.fundingGroup,
     Composition = db.composition,
-    User = db.user,
     sequelize = db.sequelize,
     Sequelize = db.Sequelize;
 
@@ -114,36 +113,28 @@ module.exports = {
                                     fundingProducts 
                                 WHERE 
                                     fundingProductId = ?`;
-            let userSql = `SELECT 
-                                userId, 
-                                email, 
-                                name, 
-                                nickname, 
-                                phoneNumber, 
-                                city, 
-                                district, 
-                                town, 
-                                detail 
-                            FROM 
-                                users 
-                            WHERE 
-                                userId = ?`;
 
             let [product] = await sequelize.query(productSql, {
                 replacements: [productId],
-                type: Sequelize.SELECT
-            });
-            
-            let [representative] = await sequelize.query(userSql, {
-                replacements: [req.user.userId],
                 type: Sequelize.SELECT
             });
 
             if (product && product.length > 0) {
                 product[0].formattedExpirationDate = formatDate(product[0].expirationDate);
             }
+            const representative = {
+                userId: req.user.userId,
+                email: req.user.email,
+                name: req.user.name,
+                nickname: req.user.nickname,
+                phoneNumber: req.user.phoneNumber,
+                city: req.user.city,
+                district: req.user.district,
+                town: req.user.town,
+                detail: req.user.detail
+            };
 
-            res.render("funding/createFunding", { product: product[0], representative: representative[0], productId: productId});
+            res.render("funding/createFunding", { product: product[0], representative, productId: productId});
         } catch (error) {
             res.status(500).send({ message: error.message });
             console.error(`Error: ${error.message}`);
@@ -153,19 +144,26 @@ module.exports = {
     createFunding: async (req, res) => {
         let productId = req.params.productId;
         try {
-            let newFundingGroup = await FundingGroup.create({
+            const fullAddress = req.body.distributionLocation || '';
+            const parts = fullAddress.trim().split(' ');
+            const city = parts[0] || '';
+            const district = parts[1] || '';
+            const town = parts[2] || '';
+            const detail = parts.slice(3).join(' ') || '';
+            
+            const newFundingGroup = await FundingGroup.create({
                 fundingProductId: productId,
                 deliveryStauts: true,
                 deliveryCost: 4000,
                 deliveryDate: req.body.deliveryDate,
-                fundingDate: new Date(), // 여기도 req.body.로 받아와야하는지 확인
-                city: req.body.distributionLocationCity,
-                district: req.body.distributionLocationDistrict,
-                town: req.body.distributionLocationTown,
-                detail: req.body.distributionLocationDetail,
+                fundingDate: new Date(),
+                city,
+                district,
+                town,
+                detail,
                 distributionDate: req.body.distributionDate,
                 people: req.body.people,
-                representativeUserId: req.user.userId,
+                representativeUserId: req.user.userId
             });
             let sql = `     select p.unit, p.unitPrice
                             from fundingProducts p
@@ -200,7 +198,12 @@ module.exports = {
             if (fundingGroup) {
                 fundingGroup.distributionDateFormatted = formatDate(fundingGroup.distributionDate);
             }
-            res.render("funding/createFundingSuccess", { fundingGroup });
+            const product = await FundingProduct.findByPk(fundingGroup.fundingProductId);
+
+            res.render("funding/createFundingSuccess", {
+              fundingGroup,
+              product // <- 추가
+            });
         } catch (error) {
             res.status(500).send({ message: error.message });
             console.error(`Error: ${error.message}`);

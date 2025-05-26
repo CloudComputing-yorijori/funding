@@ -36,10 +36,38 @@
                 <span> <%= group.distributionDate %> </span>
             </div>
         </div>
-        <a href="/joinfundingPage/fundingPage">
-            <span class="button">확인</span>
-        </a>
+        <span class="button" id="backToListBtn">확인</span>
     </div>
 </div>
+
+<script>
+    document.getElementById('backToListBtn').addEventListener('click', async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert("로그인이 필요합니다.");
+        return;
+      }
+  
+      try {
+        const res = await fetch('/joinfundingPage/fundingPage', {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + token
+          }
+        });
+  
+        if (res.ok) {
+          const html = await res.text();
+          document.open();
+          document.write(html);
+          document.close();
+        } else {
+          alert("페이지를 불러오지 못했습니다 (권한 문제)");
+        }
+      } catch (err) {
+        alert("요청 중 오류 발생: " + err.message);
+      }
+    });
+  </script>
 </body>
 </html>

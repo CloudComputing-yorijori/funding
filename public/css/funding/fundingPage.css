@@ -180,3 +180,13 @@ body{
     top: 0px;
     z-index: 2;
 }
+button.funding-list-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    text-align: left;
+  }

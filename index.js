@@ -1,21 +1,20 @@
 const express = require("express"),
     layouts = require("express-ejs-layouts"),
+    db = require("./models/index"),
+    flash = require("connect-flash"),
     bodyParser = require('body-parser');
+const session = require('express-session');
+const FileStore = require('session-file-store')(session);
+const passport = require('passport');
+
+
+db.sequelize.sync({});
+// const User = db.user;
 
 const fs = require("fs");
 const path = require("path");
 
 const app = express();
-
-
-//bodyParser 추가
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-
-// 뷰 엔진 설정
-app.set('view engine', 'ejs');
-app.use(layouts);
-app.use(express.static('public')); // 정적 파일 사용
 
 
 // 세션 설정
@@ -26,20 +25,50 @@ app.use(session({
     store: new FileStore()
 }));
 
+app.use(flash());
+const multer = require('multer');
+const multerGoogleStorage = require('multer-google-storage');
+const cors = require('cors');
 
-app.use(passport.initialize());
-app.use(passport.session());
-passport.use(User.createStrategy());
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
+// core 오류 방지 설정
+app.use(cors({
+    origin: 'http://localhost:3000',
+    
+}));
+    
+//bodyParser 추가
+// app.use(bodyParser.urlencoded({ extended: true }));
+// app.use(bodyParser.json());
+
+// 뷰 엔진 설정
+app.set('view engine', 'ejs');
+app.use(layouts);
+app.use(express.static('public')); // 정적 파일 사용
+
+
+
+
+// app.use(passport.initialize());
+// app.use(passport.session());
+// passport.use(User.createStrategy());
+// passport.serializeUser(User.serializeUser());
+// passport.deserializeUser(User.deserializeUser());
+
+// app.use((req, res, next) => {
+//     res.locals.loggedIn = req.isAuthenticated();
+//     res.locals.currentUser = req.user;
+//     res.locals.flashMessages = req.flash();
+//     console.log(res.locals.flashMessages);
+//     next();
+// });
 
 app.use((req, res, next) => {
-    res.locals.loggedIn = req.isAuthenticated();
-    res.locals.currentUser = req.user;
+    res.locals.loggedIn = false;         // 임시 고정
+    res.locals.currentUser = req.user;   // JWT 미들웨어에서 넣은 값
     res.locals.flashMessages = req.flash();
-    console.log(res.locals.flashMessages);
     next();
 });
+
 
 
 // 모든 요청 전에 실행되는 미들웨어
@@ -52,15 +81,22 @@ app.use((req, res, next) => {
 // Router
 const joinFundingRouter = require("./routers/joinFundingRouter.js")
 const createFundingRouter = require("./routers/createFundingRouter.js")
-
+const fundingRouter = require("./routers/fundingRoutes.js");
+const testRoutes = require('./routers/testRoutes'); 
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
 
 // home 접근
-app.use("/", homeRouter);
+// app.use("/", homeRouter);
 // createFundingRouter 접근
 app.use("/createfundingPage", createFundingRouter);
 // joinFundingRouter 접근
 app.use("/joinfundingPage", joinFundingRouter);
-
+// fundingRouter 접근
+app.use("/fundingPage", fundingRouter);
+// test
+app.use('/test', testRoutes);
 // 서버 실행
 app.set("port", 3000);
 app.listen(app.get("port"), "0.0.0.0", () => {

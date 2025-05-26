@@ -25,49 +25,68 @@
     <div> 
       <!-- DB에 목록이 있을 때 -->
       <% if (Object.keys(results).length > 0) { %> 
-        
       <div class="fundingRegion">
         지금 <%= results[0].district %>에서 열린 공동 펀딩은..
       </div>
       <div class="funding-container">
-        <% results.forEach(result=> { %>
+        <% results.forEach(result => { %>
           <div class="funding-card">
-            <!-- 목록마다 링크 다르게해야함. 그룹아이디로 구별하기. -->
-            <a href="<%=`/joinfundingPage/joinFunding/${result.fundingGroupId}` %>" class="funding-list">
+            <button class="funding-list-btn" data-id="<%= result.fundingGroupId %>">
               <div class="img-box">
                 <img src="<%= result.imageUrl %>" alt="productImage" class="img">
               </div>
               <div class="information-box">
-                <p class="information">품명: <%= result.productName %> <%=result.quantity%>개
-                </p>
-                <p class="information">펀딩 대표자: <%= result.name %>
-                </p>
-                <p class="information">단위 당 가격: <%= result.unit%>개 / <%= result.unitPrice %>원
-                </p>
-            </a>
+                <p class="information">품명: <%= result.productName %> <%= result.quantity %>개</p>
+                <p class="information">펀딩 대표자: <%= result.name %></p>
+                <p class="information">단위 당 가격: <%= result.unit %>개 / <%= result.unitPrice %>원</p>
+              </div>
+            </button>
           </div>
+        <% }) %>
       </div>
-      <% }) %>
-      <!-- 키워드와 관련된 목록이 없을 때 -->
-      <%} else{%>
+      <% } else { %>
         <div class="noItems">
           "<%= query %>"와 관련된 펀딩이 없습니다.
         </div>
-        <%}%>
-  </div>
-  <div class="OpenFuding-box">
-    <div class="in">
-      내가 필요한 물품에 대한 펀딩이 없다면?
+      <% } %>
     </div>
-    <!-- 펀딩생성하는 페이지로 이동하도록 수정필요 -->
-    <a href="/createfundingPage/create_funding_search" class="open"> 
-      <div class="funding-btn">펀딩 열기
-      </div>
-    </a>
+
+    <div class="OpenFuding-box">
+      <div class="in">내가 필요한 물품에 대한 펀딩이 없다면?</div>
+      <a href="/createfundingPage/create_funding_search" class="open">
+        <div class="funding-btn">펀딩 열기</div>
+      </a>
+    </div>
   </div>
-</div>
 
 </div>
+
+<script>
+  // 펀딩 상세 fetch 이동 (JWT 포함)
+  document.querySelectorAll('.funding-list-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const token = localStorage.getItem('token');
+      const groupId = btn.dataset.id;
+
+      try {
+        const res = await fetch(`/joinfundingPage/joinFunding/${groupId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + token
+          }
+        });
+
+        if (!res.ok) throw new Error('접근 실패');
+        const html = await res.text();
+        document.open();
+        document.write(html);
+        document.close();
+      } catch (err) {
+        alert('접근 실패: ' + err.message);
+      }
+    });
+  });
+</script>
+
 </body>
-
 </html>

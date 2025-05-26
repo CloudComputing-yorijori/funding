@@ -24,9 +24,9 @@
     </div>
     <div class="search-container">
       <div class="search">물품 검색: </div>
-      <form class="search-form" action="/joinfundingPage/fundingSearch" method="get">
-        <input type="text" name="query" placeholder="펀딩 검색" class="search-input">
-        <button type="submit" class="search-btn" onclick="executeSearch()">
+      <form id="search-form" class="search-form">
+        <input type="text" name="query" id="search-input" placeholder="펀딩 검색" class="search-input">
+        <button type="submit" class="search-btn">
           <i class="fa-solid fa-magnifying-glass"></i>
         </button>
       </form>
@@ -41,19 +41,16 @@
         <% products.forEach(product=> { %>
           <div class="funding-card">
             <!-- 목록마다 링크 다르게해야함. 그룹아이디로 구별하기. -->
-            <a href="<%=`/joinfundingPage/joinFunding/${product.fundingGroupId}` %>" class="funding-list">
+            <button class="funding-list-btn" data-id="<%= product.fundingGroupId %>">
               <div class="img-box">
                 <img src="<%= product.imageUrl %>" alt="productImage" class="img">
               </div>
               <div class="information-box">
-                <p class="information">품명: <%= product.productName %> <%=product.quantity%>개
-                </p>
-                <p class="information">펀딩 대표자: <%= product.name %>
-                </p>
-                <p class="information">단위 당 가격: <%= product.unit %>개 / <%= product.unitPrice %>원
-                </p>
-            </a>
-          </div>
+                <p class="information">품명: <%= product.productName %> <%=product.quantity%>개</p>
+                <p class="information">펀딩 대표자: <%= product.name %></p>
+                <p class="information">단위 당 가격: <%= product.unit %>개 / <%= product.unitPrice %>원</p>
+              </div>
+            </button>
       </div>
       <% }) %>
       <!-- DB에 목록이 없을 때 -->
@@ -77,14 +74,55 @@
   </div>
 </div>
 </body>
+<script>
+  // 검색 시 fetch + 토큰
+  document.getElementById('search-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    const query = document.getElementById('search-input').value;
+    const url = `/joinfundingPage/fundingSearch?query=${encodeURIComponent(query)}`;
 
-<script> //enter키로 검색
-  document.getElementById('search-input').addEventListener('keydown', function(event) {
-      if (event.key === 'Enter') {
-          event.preventDefault(); // 폼 제출 방지
-          document.querySelector('.search-form').submit(); // 폼 제출
-      }
+    fetch(url, {
+      method: 'GET',
+      headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+    })
+    .then(res => res.text())
+    .then(html => {
+      document.open();
+      document.write(html);
+      document.close();
+    })
+
+    .catch(err => alert('검색 실패: ' + err.message));
+  });
+
+  // 펀딩 상세 페이지 fetch + 토큰
+  document.querySelectorAll('.funding-list-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const token = localStorage.getItem('token');
+      const groupId = btn.dataset.id;
+      const url = `/joinfundingPage/joinFunding/${groupId}`;
+
+      fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('접근 실패');
+        return res.text();
+      })
+      .then(html => {
+        document.open();
+        document.write(html);
+        document.close();
+      })
+
+      .catch(err => alert('접근 실패: ' + err.message));
+    });
   });
 </script>
+
 
 </html>

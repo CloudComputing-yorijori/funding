@@ -11,18 +11,14 @@ db.Sequelize = Sequelize;
 
 db.fundingProduct = require('./fundingProduct.js')(sequelize, Sequelize); //펀딩상품
 db.fundingGroup = require('./fundingGroup.js')(sequelize, Sequelize); //펀딩그룹
-
+db.composition = require('./composition.js')(sequelize, Sequelize); //구성
 
 // Funding Groups and Funding Products
 db.fundingGroup.belongsTo(db.fundingProduct, { foreignKey: 'fundingProductId' });
 db.fundingProduct.hasMany(db.fundingGroup, { foreignKey: 'fundingProductId' });
 
-// Funding Groups and Users (Leaders)
-db.fundingGroup.belongsToMany(db.user, { 
-    through: 'composition',foreignKey: 'fundingGroupId',
-    otherKey: 'userId'});
-db.user.belongsToMany(db.fundingGroup, {
-     through: 'composition',foreignKey: 'userId',
-otherKey: 'fundingGroupId'});
+// Funding Groups and Compositions
+db.fundingGroup.hasMany(db.composition, { foreignKey: 'fundingGroupId' });
+db.composition.belongsTo(db.fundingGroup, { foreignKey: 'fundingGroupId' });
 
 module.exports= db;

@@ -1,0 +1,31 @@
+<button onclick="goToJoinFundingPage()">공동 펀딩 목록 보기</button>
+
+<script>
+  async function goToJoinFundingPage() {
+    const token = localStorage.getItem('token'); // 로그인 시 저장된 JWT
+
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/joinfundingPage/fundingPage', {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      if (res.ok) {
+        const html = await res.text();
+        const win = window.open();
+        win.document.write(html);
+      } else {
+        alert('접근 실패 (JWT 만료 또는 권한 없음)');
+      }
+    } catch (err) {
+      alert('요청 실패: ' + err.message);
+    }
+  }
+</script>

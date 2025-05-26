@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+matadata:
+  name: funding-config
+data:
+  PORT: "80"
+  DBHOST: "mongodb://mongo:3000"
+  DBNAME: "funidng"
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: funding
+spec:
+  replicas: 1
+  selector:
+    metadata:
+      labes:
+        app: funding
+    spec:
+      containers:
+      - name: funding
+        image: limyeeun/funding
+        ports:
+        - containerPort: 80
+        envFrom:
+        - confingMapRef:
+          name: funding-config
+
+---
+
+apiVersion: v1
+kind: service
+metadata:
+  name: funding
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 3001
+    targetpPrt: 80
+  selector:
+    app: funding

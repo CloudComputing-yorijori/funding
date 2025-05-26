@@ -15,7 +15,7 @@
             <div class="img_box">
                 <img class="img" src="<%= product.imageUrl %>" alt="Product Image"></img>
             </div>
-            <form action="<%= `/createfundingPage/create_funding/${productId}` %>" method="POST">
+            <form id="createFundingForm" method="POST" onsubmit="return submitWithToken(event)">                
                 <div class="information">          
                     <label for="fundingDate">펀딩 일자:</label>
                     <span class="info"><%= new Date().toISOString().split('T')[0] %></span>
@@ -58,6 +58,48 @@
             </form>         
         </div>  
     </div>
+
+    
+    <script>
+        async function submitWithToken(event) {
+            event.preventDefault(); // 기본 제출 막기
+
+            const token = localStorage.getItem("token");
+            if (!token) {
+                alert("로그인이 필요합니다.");
+                return;
+            }
+
+            const form = document.getElementById("createFundingForm");
+            const formData = new FormData(form);
+            const productId = "<%= product.fundingProductId %>";
+
+            try {
+                const res = await fetch(`/createfundingPage/create_funding/${productId}`, {
+                    method: "POST",
+                    headers: {
+                        Authorization: "Bearer " + token
+                    },
+                    body: formData
+                });
+
+                if (res.ok) {
+                    const html = await res.text();
+                    document.open(); // 현재 페이지 내용을 덮어씀
+                    document.write(html);
+                    document.close();
+                } else {
+                    alert("인증 실패 또는 서버 오류");
+                }
+            } catch (err) {
+                console.error("요청 실패:", err);
+                alert("요청 중 오류 발생");
+            }
+
+            return false;
+        }
+    </script>
+
 </body>
 </html>
 

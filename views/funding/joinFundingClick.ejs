@@ -48,9 +48,7 @@
                 </span>
             </div>
         </div>
-        <a href="<%=`/joinfundingPage/joinFundingComplete/${group.fundingGroupId}/complete`%>">
-            <span class="button">확인</span>
-        </a>
+        <span class="button" id="confirmBtn">확인</span>
     </div>
 
      <!-- 팝업 배경 -->
@@ -116,5 +114,37 @@
          }
      </script>
      </div>
+     
+<script>
+    document.getElementById('confirmBtn').addEventListener('click', async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+  
+      const groupId = "<%= group.fundingGroupId %>";
+  
+      try {
+        const res = await fetch(`/joinfundingPage/joinFundingComplete/${groupId}/complete`, {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + token
+          }
+        });
+  
+        if (res.ok) {
+          const html = await res.text();
+          document.open();
+          document.write(html);
+          document.close();
+        } else {
+          alert('인증 실패 또는 서버 오류');
+        }
+      } catch (err) {
+        alert('요청 중 오류 발생: ' + err.message);
+      }
+    });
+  </script>
 </body>
 </html>

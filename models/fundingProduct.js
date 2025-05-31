@@ -41,7 +41,7 @@ FundingProduct.init({
     type: Sequelize.DATE,
     allowNull: false
   },
-  imageUrl: { //이미지주소
+  imageId: { //이미지ID
     type: Sequelize.STRING,
     allowNull: false
   }

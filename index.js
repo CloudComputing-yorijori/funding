@@ -7,7 +7,7 @@ const session = require('express-session');
 const FileStore = require('session-file-store')(session);
 const fs = require("fs");
 const path = require("path");
-
+const passport = require("passport");
 const app = express();
 
 
@@ -27,8 +27,8 @@ const cors = require('cors');
 
 // core 오류 방지 설정
 app.use(cors({
-    origin: 'http://localhost:3000',
-    
+  origin: ['https://user.yorijori.com', 'https://funding.yorijori.com'],
+  credentials: true
 }));
     
 //bodyParser 추가
@@ -77,18 +77,21 @@ const redisClient = Redis.createClient({
   
 // 세션 설정 (RedisStore 사용)
 app.use(
-    session({
+  session({
+      name: 'connect.sid', // 유저 서비스와 동일한 이름
       store: new RedisStore({ client: redisClient }),
       secret: "yorijori_secret_key",
       resave: false,
-      saveUninitialized: false, // true면 로그인 안해도 세션 생성됨
+      saveUninitialized: false,
       cookie: {
-        secure: false, // HTTPS 환경에서는 true로 설정 필요
-        httpOnly: true,
-        maxAge: 1000 * 60 * 60 * 24, // 1일
-      },
-    })
-  );
+          secure: false,  
+          httpOnly: true,  // JS 접근 차단 (보안)
+          maxAge: 1000 * 60 * 60 * 24,
+          sameSite: 'lax', 
+          domain: ".yorijori.com" // 도메인 일치
+      }
+  })
+);
   
   app.use((req, res, next) => {
     // 세션 로그인 여부
@@ -119,8 +122,9 @@ app.use("/createfundingPage", createFundingRouter);
 app.use("/joinfundingPage", joinFundingRouter);
 // fundingRouter 접근
 app.use("/funding", fundingRouter);
+
 // test
-app.use('/test', testRoutes);
+// app.use('/test', testRoutes);
 // 서버 실행
 
 db.sequelize.sync({ alter: true })  // 또는 { force: true } → 개발 중 사용 가능

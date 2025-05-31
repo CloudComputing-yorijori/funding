@@ -134,9 +134,9 @@ const db = require("../models/index"),
     sequelize = db.sequelize,
     Sequelize = db.Sequelize;
 
-// GET /fundings/participated?userId=42
+// GET /fundings/participated
 exports.getParticipatedFundings = async (req, res) => {
-    const userId = req.user.userId;
+    const userId = req.session?.user?.userId;
     if (!userId) return res.status(400).json({ message: 'userId is required' });
 
     try {
@@ -144,19 +144,20 @@ exports.getParticipatedFundings = async (req, res) => {
             where: { userId },
             attributes: ['userId', 'fundingGroupId'],
             include: [
-            {
-                model: FundingGroup,
-                attributes: ['fundingDate', 'people'],
-                include: [
                 {
-                    model: FundingProduct,
-                    attributes: ['productName', 'imageUrl']
+                    model: FundingGroup,
+                    attributes: ['fundingDate', 'people'],
+                    include: [
+                        {
+                            model: FundingProduct,
+                            attributes: ['productName', 'imageUrl']
+                        }
+                    ]
                 }
-                ]
-            }
             ],
             order: [[Sequelize.literal('fundingGroup.fundingDate'), 'DESC']]
         });
+
         res.json(results);
     } catch (err) {
         console.error(err);
@@ -164,27 +165,29 @@ exports.getParticipatedFundings = async (req, res) => {
     }
 };
 
-// GET /fundings/opened?userId=42
+// GET /fundings/opened
 exports.getOpenedFundings = async (req, res) => {
-    const userId = req.user.userId;
+  console.log("요청 들어온 세션:", req.session);
+
+    const userId = req.session?.user?.userId;
     if (!userId) return res.status(400).json({ message: 'userId is required' });
-  
+
     try {
-      const results = await FundingGroup.findAll({
-        where: { representativeUserId: userId },
-        attributes: ['representativeUserId', 'fundingDate', 'people'],
-        include: [
-          {
-            model: FundingProduct,
-            attributes: ['productName', 'imageUrl']
-          }
-        ],
-        order: [['fundingDate', 'DESC']]
-      });
-  
-      res.json(results);
+        const results = await FundingGroup.findAll({
+            where: { representativeUserId: userId },
+            attributes: ['representativeUserId', 'fundingDate', 'people'],
+            include: [
+                {
+                    model: FundingProduct,
+                    attributes: ['productName', 'imageUrl']
+                }
+            ],
+            order: [['fundingDate', 'DESC']]
+        });
+
+        res.json(results);
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'DB error' });
+        console.error(error);
+        res.status(500).json({ message: 'DB error' });
     }
-  };
+};

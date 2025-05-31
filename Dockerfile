@@ -6,4 +6,7 @@ COPY package*.json ./
 RUN npm install --only=production
 COPY . .
 
-CMD npm start
+EXPOSE 3001
+
+CMD npx wait-port mysql-funding:3306 && \
+    npm start

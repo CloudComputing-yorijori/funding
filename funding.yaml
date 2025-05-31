@@ -1,11 +1,12 @@
 apiVersion: v1
 kind: ConfigMap
-matadata:
+metadata:
   name: funding-config
 data:
-  PORT: "80"
-  DBHOST: "mongodb://mongo:3000"
-  DBNAME: "funidng"
+  DB_HOST: "mysql-funding"
+  DB_PORT: "3306"
+  DB_NAME: "funding"
+  DB_USER: "root"
 
 ---
 
@@ -13,32 +14,43 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: funding
+  labels:
+    app: funding
 spec:
   replicas: 1
   selector:
+    matchLabels:
+      app: funding
+  template:
     metadata:
-      labes:
+      labels:
         app: funding
     spec:
       containers:
       - name: funding
-        image: limyeeun/funding
+        image: limyeeun/cloudcomputing-yorijori:1.6
         ports:
-        - containerPort: 80
+        - containerPort: 3001
         envFrom:
-        - confingMapRef:
-          name: funding-config
+        - configMapRef:
+            name: funding-config
+        env:
+          - name: DB_PASS
+            valueFrom:
+              secretKeyRef:
+                name: db-credentials
+                key: DB_PASS
 
 ---
 
 apiVersion: v1
-kind: service
+kind: Service
 metadata:
   name: funding
 spec:
   type: LoadBalancer
   ports:
   - port: 3001
-    targetpPrt: 80
+    targetPort: 3001
   selector:
     app: funding

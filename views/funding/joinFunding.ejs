@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>yorijori</title>
     <link rel="stylesheet" href="/css/styles.css">
-    <link rel="stylesheet" href="/css/funding/joinFunding.css">
+    <link rel="stylesheet" href="/css/fundingCss/funding/joinFunding.css">
     
 </head>
 
@@ -76,7 +76,9 @@
             앞으로 <span class="num">
                 <%= people %>명</span>이 더 필요해요!
         </div>
-        <div class="button" id="join-btn">이 펀딩 참여하기</div>
+        <a href="<%=`/joinfundingPage/joinFunding/${group.fundingGroupId}/join`%>">
+            <div class="button" id="join-btn">이 펀딩 참여하기</div>
+        </a>
     </div>
 
     <!-- 팝업 배경 -->
@@ -143,36 +145,6 @@
     </script>
     </div>
 </div>
-
-
-<script>
-    document.getElementById('join-btn').addEventListener('click', async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        alert("로그인이 필요합니다.");
-        return;
-      }
-  
-      const groupId = "<%= group.fundingGroupId %>";
-      try {
-        const res = await fetch(`/joinfundingPage/joinFunding/${groupId}/join`, {
-          method: 'GET',
-          headers: {
-            Authorization: 'Bearer ' + token
-          }
-        });
-  
-        if (!res.ok) throw new Error('접근 실패');
-  
-        const html = await res.text();
-        document.open();
-        document.write(html);
-        document.close();
-      } catch (err) {
-        alert("접근 실패: " + err.message);
-      }
-    });
-  </script>
 </body>
 
 </html>

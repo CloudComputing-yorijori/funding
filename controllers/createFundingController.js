@@ -330,10 +330,11 @@ module.exports = {
             console.error(`Error: ${error.message}`);
         }
     },
-
     showCreateFundingPage: async (req, res) => {
         try {
             let productId = req.params.productId;
+    
+            // 제품 정보 조회
             let productSql = `SELECT 
                                     fundingProductId, 
                                     productName, 
@@ -344,47 +345,49 @@ module.exports = {
                                     unit, 
                                     registrationDate, 
                                     imageUrl 
-                                FROM 
-                                    fundingProducts 
-                                WHERE 
-                                    fundingProductId = ?`;
-            let userSql = `SELECT 
-                                userId, 
-                                email, 
-                                name, 
-                                nickname, 
-                                phoneNumber, 
-                                city, 
-                                district, 
-                                town, 
-                                detail 
-                            FROM 
-                                users 
-                            WHERE 
-                                userId = ?`;
-
+                                FROM fundingProducts 
+                                WHERE fundingProductId = ?`;
+    
             let [product] = await sequelize.query(productSql, {
                 replacements: [productId],
                 type: Sequelize.SELECT
             });
-            
-            let [representative] = await sequelize.query(userSql, {
-                replacements: [req.session.user.id], 
-                type: Sequelize.SELECT
-            });
-
+    
             if (product && product.length > 0) {
                 product[0].formattedExpirationDate = formatDate(product[0].expirationDate);
             }
-
-            res.render("funding/createFunding", { product: product[0], representative: representative[0], productId: productId});
+    
+            // 세션에서 대표자 정보 꺼내기
+            const representative = req.session.user;
+    
+            res.render("funding/createFunding", {
+                product: product[0],
+                representative, // 세션에서 꺼낸 유저 정보
+                productId
+            });
         } catch (error) {
             res.status(500).send({ message: error.message });
             console.error(`Error: ${error.message}`);
         }
     },
+    
 
     createFunding: async (req, res) => {
+        const location = req.body.distributionLocation || "";
+        const parts = location.trim().split(/\s+/);  // 공백 기준 나눔
+
+        const city = parts[0] || null;
+        const district = parts[1] || null;
+        const town = parts[2] || null;
+        const detail = parts.slice(3).join(' ') || null;
+
+        if (!city || !district || !town || !detail) {
+            return res.status(400).send({ message: "주소 형식이 올바르지 않습니다." });
+        }
+        if (parts.length < 4) {
+            return res.status(400).send({ message: "배부 위치는 시/구/동/상세주소 형식이어야 합니다." });
+        }
+        
         let productId = req.params.productId;
         try {
             let newFundingGroup = await FundingGroup.create({
@@ -392,15 +395,16 @@ module.exports = {
                 deliveryStatus: true,
                 deliveryCost: 4000,
                 deliveryDate: req.body.deliveryDate,
-                fundingDate: new Date(), // 여기도 req.body.로 받아와야하는지 확인
-                city: req.body.distributionLocationCity,
-                district: req.body.distributionLocationDistrict,
-                town: req.body.distributionLocationTown,
-                detail: req.body.distributionLocationDetail,
+                fundingDate: new Date(),
+                city,
+                district,
+                town,
+                detail,
                 distributionDate: req.body.distributionDate,
                 people: req.body.people,
-                representativeUserId: req.session.user.id,
+                representativeUserId: req.session.user.userId,
             });
+            
             let sql = `     select p.unit, p.unitPrice
                             from fundingProducts p
                             left join fundingGroups g on p.fundingProductId = g.fundingProductId
@@ -412,7 +416,7 @@ module.exports = {
 
             let newComposition = await Composition.create({
                 fundingGroupId: newFundingGroup.fundingGroupId,
-                userId: req.session.user.id,
+                userId: req.session.user.userId,
                 quantity: product[0].unit,
                 amount: product[0].unitPrice
             });

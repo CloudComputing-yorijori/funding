@@ -1,60 +1,51 @@
 const express = require("express");
+const app = express();
 const layouts = require("express-ejs-layouts");
 const db = require("./models/index");
+const bodyParser = require("body-parser");
+const session = require("express-session");
 const flash = require("connect-flash");
-const bodyParser = require('body-parser');
-const session = require('express-session');
-const FileStore = require('session-file-store')(session);
+const passport = require("passport");
 const fs = require("fs");
 const path = require("path");
-const passport = require("passport");
-const app = express();
+const multer = require("multer");
+const multerGoogleStorage = require("multer-google-storage");
+const cors = require("cors");
+require("dotenv").config();
 
+// Redis 관련 모듈
+const Redis = require("redis");
+const { RedisStore } = require("connect-redis");
 
-// db.sequelize.sync({});
-// // 세션 설정
-// app.use(session({
-//     secret: 'yorijori_secret_key',
-//     resave: false,
-//     saveUninitialized: true,
-//     store: new FileStore()
-// }));
+// Redis 클라이언트 생성
+const redisClient = Redis.createClient({
+  legacyMode: true,
+  url: "redis://redis:6379",
+});
+redisClient.connect().catch(console.error);
 
-app.use(flash());
-const multer = require('multer');
-const multerGoogleStorage = require('multer-google-storage');
-const cors = require('cors');
+// DB 연결
+db.sequelize.sync({});
 
 // core 오류 방지 설정
 app.use(cors({
-  origin: ['https://user.yorijori.com', 'https://funding.yorijori.com'],
+  origin: ['https://yorijori.com'],
   credentials: true
 }));
     
-//bodyParser 추가
-// app.use(bodyParser.urlencoded({ extended: true }));
-// app.use(bodyParser.json());
+
+// BodyParser 설정
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
+// 정적 파일 제공
+app.use("/uploadprofile", express.static(path.join(__dirname, "uploadprofile")));
+app.use("/assets", express.static(path.join(__dirname, "public/assets")));
+app.use("/css", express.static(path.join(__dirname, "public/css")));
 
 // 뷰 엔진 설정
-app.set('view engine', 'ejs');
+app.set("view engine", "ejs");
 app.use(layouts);
-app.use(express.static('public')); // 정적 파일 사용
-
-// 전역 변수 설정 (플래시 메시지를 모든 템플릿에서 사용할 수 있도록 설정)
-// app.use((req, res, next) => {
-//     res.locals.successMessages = req.flash("success");
-//     res.locals.errorMessages = req.flash("error");
-//     next();
-//   })
-
-
-// app.use((req, res, next) => {
-//     res.locals.loggedIn = false;         // 임시 고정
-//     res.locals.currentUser = req.user;   // JWT 미들웨어에서 넣은 값
-//     res.locals.flashMessages = req.flash();
-//     next();
-// });
-
 
 // 모든 요청 전에 실행되는 미들웨어
 app.use((req, res, next) => {
@@ -63,36 +54,25 @@ app.use((req, res, next) => {
     next();
 });
 
-
-// Redis 관련 모듈 추가
-const Redis = require("redis");
-const { RedisStore } = require("connect-redis");
-
-// Redis 클라이언트 생성
-const redisClient = Redis.createClient({
-    legacyMode: true, // Redis v4를 사용하는 경우, connect-redis 호환을 위해 legacy 모드 설정
-    url: "redis://redis:6379", // 실제 Redis 서버 컨테이너와 일치해야 됨
-  });
-  redisClient.connect().catch(console.error);
-  
-// 세션 설정 (RedisStore 사용)
+// 세션 설정 (Redis 사용)
 app.use(
   session({
-      name: 'connect.sid', // 유저 서비스와 동일한 이름
-      store: new RedisStore({ client: redisClient }),
-      secret: "yorijori_secret_key",
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-          secure: false,  
-          httpOnly: true,  // JS 접근 차단 (보안)
-          maxAge: 1000 * 60 * 60 * 24,
-          sameSite: 'lax', 
-          domain: ".yorijori.com" // 도메인 일치
-      }
+    store: new RedisStore({ client: redisClient }),
+    secret: "yorijori_secret_key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: false,
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24,
+    },
   })
 );
-  
+
+// 플래시 메시지 설정
+app.use(flash());
+
+
   app.use((req, res, next) => {
     // 세션 로그인 여부
     res.locals.loggedIn = !!req.session.user;
@@ -102,42 +82,42 @@ app.use(
     res.locals.flashMessages = req.flash();
     next();
   });
-  
-  
 
-// Router
-const joinFundingRouter = require("./routers/joinFundingRouter.js")
-const createFundingRouter = require("./routers/createFundingRouter.js")
+// 전역 변수 설정 (템플릿 접근용)
+// app.use((req, res, next) => {
+//   res.locals.successMessages = req.flash("success");
+//   res.locals.errorMessages = req.flash("error");
+//   res.locals.loggedIn = req.isAuthenticated();
+//   res.locals.currentUser = req.user;
+//   res.locals.flashMessages = req.flash();
+//   res.locals.showCategoryBar = false;
+//   res.locals.showSubCategoryBar = false;
+//   console.log(res.locals.flashMessages);
+//   next();
+// });
+
+// Passport 설정
+// app.use(passport.initialize());
+// app.use(passport.session());
+// passport.use(User.createStrategy());
+// passport.serializeUser(User.serializeUser());
+// passport.deserializeUser(User.deserializeUser());
+
+// 라우터 연결
+const joinFundingRouter = require("./routers/joinFundingRouter.js");
+const createFundingRouter = require("./routers/createFundingRouter.js");
 const fundingRouter = require("./routers/fundingRoutes.js");
-const testRoutes = require('./routers/testRoutes'); 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
+// const testRoutes = require("./routers/testRoutes");
 
-// home 접근
-// app.use("/", homeRouter);
-// createFundingRouter 접근
 app.use("/createfundingPage", createFundingRouter);
-// joinFundingRouter 접근
 app.use("/joinfundingPage", joinFundingRouter);
-// fundingRouter 접근
 app.use("/funding", fundingRouter);
+// app.use("/test", testRoutes);
 
-// test
-// app.use('/test', testRoutes);
 // 서버 실행
+app.set("port", 3001);
+app.listen(app.get("port"), "0.0.0.0", () => {
+  console.log(`Server running at http://localhost:${app.get("port")}`);
+});
 
-db.sequelize.sync({ alter: true })  // 또는 { force: true } → 개발 중 사용 가능
-  .then(() => {
-    console.log("✅ Sequelize 테이블 동기화 완료");
-
-    // 서버 실행
-    app.set("port", 3001);
-    app.listen(app.get("port"), "0.0.0.0", () => {
-      console.log(` Server running at http://localhost:${app.get("port")}`);
-    });
-  })
-  .catch((err) => {
-    console.error(" Sequelize 테이블 동기화 실패:", err);
-  });
 module.exports = app;

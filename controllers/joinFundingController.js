@@ -312,8 +312,10 @@ module.exports = {
     fundingList: async (req, res, next) => {
         try {
             // 세션에서 로그인된 사용자 정보 추출
-            let userDistrict = req.session.user?.district;
-            if (!userDistrict) return res.status(401).send({ message: "세션 없음" });
+            let user = req.session.user;
+            if (!user) return res.status(401).send({ message: "세션 없음" });
+
+            let userDistrict = req.session.user.district;
 
             //펀딩그룹을 기준으로 펀딩상품 테이블을 조인해서 정보가져옴. users 테이블 제거
             let query = `
@@ -355,9 +357,10 @@ module.exports = {
 
     fundingSearch: async (req, res, next) => {
         try {
-            let userDistrict = req.session.user?.district;
-            if (!userDistrict) return res.status(401).send({ message: "세션 없음" });
+            let user = req.session.user;
+            if (!user) return res.status(401).send({ message: "세션 없음" });
 
+            let userDistrict = req.session.user.district;
             let query = req.query.query;
             let sql = `
                 SELECT fundingGroups.fundingGroupId,
@@ -462,7 +465,7 @@ module.exports = {
             let composition = await Composition.findOne({
                 where: {
                     fundingGroupId: groups.fundingGroupId,
-                    userId: user.id
+                    userId: user.userId
                 }
             });
 
@@ -493,7 +496,7 @@ module.exports = {
 
         let newComposition = await Composition.create({
             fundingGroupId: groupId,
-            userId: user.id,
+            userId: user.userId,
             quantity: groups.unit,
             amount: res.locals.price
         });
@@ -513,7 +516,7 @@ module.exports = {
 
         let query = `
             DELETE FROM compositions
-            WHERE userId = ${user.id} and fundingGroupId = ${groupId};`;
+            WHERE userId = ${user.userId} and fundingGroupId = ${groupId};`;
 
         let result = await sequelize.query(query, { type: Sequelize.DELETE });
         res.redirect("/auth/mypageParticipatedFunding");

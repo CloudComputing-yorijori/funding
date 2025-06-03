@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>yorijori</title>
-    <link rel="stylesheet" href="/css/funding/funding_create_success.css">
+    <link rel="stylesheet" href="/css/fundingCss/funding/funding_create_success.css">
 </head>
 <body>
     <div id="container">
@@ -29,34 +29,10 @@
                     <span><%= fundingGroup.distributionDateFormatted %></span>
                 </div>
             </div>
-            <a href="/">
+            <a href="/joinfundingPage/fundingPage">
                 <span class="button">확인</span>       
             </a>
         </div>
     </div>
-
-    <script>
-        document.querySelector('.button').addEventListener('click', async () => {
-          const token = localStorage.getItem('token'); // JWT는 로그인 후 localStorage에 저장돼 있어야 함
-          const productId = "<%= product.fundingProductId %>";
-    
-          const res = await fetch(`/`, { // 수정필요
-            method: 'GET',
-            headers: {
-              Authorization: 'Bearer ' + token
-            }
-          });
-    
-          if (res.ok) {
-            const html = await res.text();
-            document.open(); // 현재 페이지 내용을 덮어씀
-            document.write(html);
-            document.close();
-          } else {
-            alert('인증에 실패했거나 권한이 없습니다.');
-          }
-        });
-      </script>
-
 </body>
 </html>

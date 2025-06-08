@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: funding
-        image: limyeeun/cloudcomputing-yorijori:5.9
+        image: limyeeun/cloudcomputing-yorijori:7.0
         ports:
         - containerPort: 3001
         envFrom:

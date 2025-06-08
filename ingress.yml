@@ -10,6 +10,20 @@ spec:
     - host: yorijori.com
       http:
         paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: community
+                port:
+                  number: 3000
+          - path: /image
+            pathType: Prefix
+            backend:
+              service:
+                name: image-service
+                port:
+                  number: 3000
           - path: /auth
             pathType: Prefix
             backend:
@@ -38,6 +52,35 @@ spec:
                 name: funding-service
                 port:
                   number: 3001
+          - path: /write
+            pathType: Prefix
+            backend:
+              service:
+                name: community
+                port:
+                  number: 3000
+          - path: /posts
+            pathType: Prefix
+            backend:
+              service:
+                name: community
+                port:
+                  number: 3000
+          - path: /user-api
+            pathType: Prefix
+            backend:
+              service:
+                name: community
+                port:
+                  number: 3000
+          
+          - path: /css
+            pathType: Prefix
+            backend:
+              service:
+                name: community
+                port:
+                  number: 3000
           - path: /css/authCss
             pathType: Prefix
             backend:
@@ -52,3 +95,12 @@ spec:
                 name: funding-service
                 port:
                   number: 3001
+        
+          - path: /assets
+            pathType: Prefix
+            backend:
+              service:
+                name: funding-service
+                port:
+                  number: 3001
+                  

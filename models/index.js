@@ -90,6 +90,20 @@ db.composition.belongsTo(db.fundingGroup, { foreignKey: 'fundingGroupId' });
       ]);
       console.log('초기 fundingProducts 데이터 삽입 완료');
     }
+
+    const groupCount = await db.fundingGroup.count();
+    if (groupCount === 0) {
+      const fundingGroups = [
+        { fundingProductId: 1, fundingDate: new Date('2025-06-15'), city: '서울시', district: '성북구', town: '길음동', detail: '성북로 1길 10', deliveryDate: null, deliveryStatus: false, deliveryCost: 3000, distributionDate: new Date(0), people: 5, representativeUserId: 1 },
+        { fundingProductId: 2, fundingDate: new Date('2025-06-18'), city: '서울시', district: '성북구', town: '정릉동', detail: '정릉로 45길 20', deliveryDate: null, deliveryStatus: false, deliveryCost: 3500, distributionDate: new Date(0), people: 8, representativeUserId: 2 },
+        { fundingProductId: 3, fundingDate: new Date('2025-06-21'), city: '서울시', district: '성북구', town: '돈암동', detail: '동소문로 30길 5', deliveryDate: null, deliveryStatus: false, deliveryCost: 4000, distributionDate: new Date(0), people: 4, representativeUserId: 1 },
+        { fundingProductId: 4, fundingDate: new Date('2025-06-24'), city: '서울시', district: '성북구', town: '삼선동', detail: '삼선교로 3길 17', deliveryDate: null, deliveryStatus: false, deliveryCost: 2500, distributionDate: new Date(0), people: 7, representativeUserId: 2 },
+        { fundingProductId: 5, fundingDate: new Date('2025-06-27'), city: '서울시', district: '성북구', town: '석관동', detail: '석관로 99', deliveryDate: null, deliveryStatus: false, deliveryCost: 3000, distributionDate: new Date(0), people: 3, representativeUserId: 1 },
+        { fundingProductId: 6, fundingDate: new Date('2025-06-30'), city: '서울시', district: '성북구', town: '장위동', detail: '장위로 88길 3', deliveryDate: null, deliveryStatus: false, deliveryCost: 2800, distributionDate: new Date(0), people: 6, representativeUserId: 2 }
+      ];
+      await db.fundingGroup.bulkCreate(fundingGroups);
+      console.log('✅ fundingGroup 6개 초기 데이터 삽입 완료');
+    }
   })();
 
 module.exports= db;

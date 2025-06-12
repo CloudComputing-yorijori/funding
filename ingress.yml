@@ -73,13 +73,6 @@ spec:
                 name: community
                 port:
                   number: 3000
-          - path: /search
-            pathType: Prefix
-            backend:
-              service:
-                name: community
-                port:
-                  number: 3000
           
           # - path: /css
           #   pathType: Prefix
